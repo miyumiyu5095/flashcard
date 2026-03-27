@@ -1,0 +1,1590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Flashcards</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #0f0f11;
+  --surface: #1a1a1f;
+  --surface2: #242429;
+  --surface3: #2e2e34;
+  --border: rgba(255,255,255,0.08);
+  --border2: rgba(255,255,255,0.13);
+  --text-primary: #f0ede8;
+  --text-secondary: #8a8790;
+  --text-muted: #555360;
+  --accent: #c8b8f0;
+  --accent-dim: rgba(200,184,240,0.12);
+  --green: #7eddb0;
+  --green-dim: rgba(126,221,176,0.12);
+  --red: #f07e8a;
+  --red-dim: rgba(240,126,138,0.12);
+  --amber: #f0c87e;
+  --amber-dim: rgba(240,200,126,0.12);
+  --radius: 20px;
+  --radius-sm: 12px;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text-primary);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+/* ── SCREEN SYSTEM ── */
+.screen {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  padding: 0 16px 100px;
+}
+.screen.active { display: flex; }
+
+/* ── SHARED TOPBAR ── */
+.topbar {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28px 0 20px;
+  flex-shrink: 0;
+}
+.topbar-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+.topbar-back {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.topbar-back:hover { background: var(--surface2); }
+.topbar-back svg { width: 18px; height: 18px; color: var(--text-secondary); }
+
+/* ════════════════════════════
+   HOME SCREEN
+════════════════════════════ */
+
+/* QUOTE BANNER */
+.quote-banner {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 20px 20px 16px;
+  cursor: pointer;
+  transition: border-color 0.2s;
+  position: relative;
+  margin-bottom: 8px;
+}
+.quote-banner:hover { border-color: var(--border2); }
+.quote-banner-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  font-weight: 500;
+}
+.quote-text {
+  font-size: 15px;
+  color: var(--text-secondary);
+  line-height: 1.7;
+}
+.quote-meaning {
+  display: none;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border);
+}
+.quote-meaning.show { display: block; }
+.quote-meaning-word {
+  font-family: 'DM Serif Display', serif;
+  font-size: 22px;
+  color: var(--text-primary);
+  margin-bottom: 4px;
+}
+.quote-meaning-text {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.quote-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 14px;
+}
+.quote-deck-label {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+.quote-bookmark-btn {
+  width: 30px; height: 30px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: transparent;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.quote-bookmark-btn:hover { background: var(--surface2); }
+.quote-bookmark-btn.bookmarked { background: var(--amber-dim); border-color: rgba(240,200,126,0.3); }
+.quote-bookmark-btn.bookmarked svg { color: var(--amber); fill: var(--amber); }
+.quote-bookmark-btn svg { width: 13px; height: 13px; color: var(--text-muted); fill: none; transition: all 0.2s; }
+
+/* SECTION LABEL */
+.section-label {
+  width: 100%;
+  max-width: 480px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  font-weight: 500;
+  margin: 20px 0 10px;
+}
+
+/* DECK LIST */
+.deck-list {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.deck-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+.deck-card:hover { border-color: var(--border2); }
+
+.deck-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 18px;
+  cursor: pointer;
+}
+.deck-card-left { display: flex; flex-direction: column; gap: 4px; }
+.deck-card-name {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.deck-card-meta {
+  font-size: 12px;
+  color: var(--text-muted);
+}
+.deck-card-chevron {
+  width: 20px; height: 20px;
+  color: var(--text-muted);
+  transition: transform 0.25s;
+  flex-shrink: 0;
+}
+.deck-card.open .deck-card-chevron { transform: rotate(90deg); }
+
+.deck-card-actions {
+  display: none;
+  border-top: 1px solid var(--border);
+}
+.deck-card.open .deck-card-actions { display: flex; }
+
+.deck-action-btn {
+  flex: 1;
+  padding: 13px 10px;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  transition: background 0.15s, color 0.15s;
+}
+.deck-action-btn:hover { background: var(--surface2); color: var(--text-primary); }
+.deck-action-btn:first-child { border-right: 1px solid var(--border); }
+.deck-action-btn svg { width: 15px; height: 15px; }
+
+.deck-add-btn {
+  background: transparent;
+  border: 1px dashed rgba(255,255,255,0.14);
+  border-radius: var(--radius-sm);
+  padding: 16px 18px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: var(--text-muted);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  width: 100%;
+}
+.deck-add-btn:hover { border-color: rgba(255,255,255,0.25); color: var(--text-secondary); background: var(--surface); }
+.deck-add-icon {
+  width: 28px; height: 28px;
+  border-radius: 8px;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text-muted);
+  flex-shrink: 0;
+}
+
+/* CALENDAR */
+.calendar-wrap {
+  width: 100%;
+  max-width: 480px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 18px 18px 16px;
+}
+.cal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+}
+.cal-month {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+.cal-nav { display: flex; gap: 4px; }
+.cal-nav-btn {
+  width: 28px; height: 28px;
+  border: 1px solid var(--border);
+  background: transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  color: var(--text-muted);
+  transition: all 0.15s;
+}
+.cal-nav-btn:hover { background: var(--surface2); color: var(--text-secondary); }
+.cal-nav-btn svg { width: 14px; height: 14px; }
+.cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+}
+.cal-dow {
+  font-size: 10px;
+  color: var(--text-muted);
+  text-align: center;
+  padding: 4px 0 6px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.cal-day {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  color: var(--text-secondary);
+  border-radius: 50%;
+  position: relative;
+  cursor: default;
+}
+.cal-day.empty { color: transparent; }
+.cal-day.today {
+  color: var(--accent);
+  font-weight: 500;
+}
+.cal-day.today::after {
+  content: '';
+  position: absolute;
+  bottom: 3px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 3px; height: 3px;
+  border-radius: 50%;
+  background: var(--accent);
+}
+.cal-day.studied {
+  color: #0f0f11;
+  font-weight: 500;
+}
+.cal-day.studied::before {
+  content: '';
+  position: absolute;
+  inset: 4px;
+  border-radius: 50%;
+  background: var(--green);
+  opacity: 0.85;
+  z-index: -1;
+}
+.cal-day.today.studied { color: #0f0f11; }
+.cal-day.today.studied::before { background: var(--accent); opacity: 0.9; }
+
+/* FLOATING QUICK BAR */
+.float-bar {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 150;
+  display: flex;
+  gap: 4px;
+  background: var(--surface2);
+  border: 1px solid var(--border2);
+  border-radius: 100px;
+  padding: 6px 8px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.45);
+}
+.float-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  padding: 8px 20px;
+  border: none;
+  background: transparent;
+  border-radius: 100px;
+  cursor: pointer;
+  transition: background 0.15s;
+  font-family: 'DM Sans', sans-serif;
+}
+.float-btn:hover { background: rgba(255,255,255,0.06); }
+.float-btn:active { transform: scale(0.95); }
+.float-btn svg { width: 18px; height: 18px; }
+.float-btn-label { font-size: 10px; font-weight: 500; letter-spacing: 0.03em; }
+.fbi-continue svg { color: var(--accent); }
+.fbi-continue .float-btn-label { color: var(--accent); }
+.fbi-add svg { color: var(--green); }
+.fbi-add .float-btn-label { color: var(--green); }
+.fbi-settings svg { color: var(--text-secondary); }
+.fbi-settings .float-btn-label { color: var(--text-muted); }
+.float-divider { width: 1px; background: var(--border); margin: 6px 0; }
+
+/* NEW DECK MODAL */
+.modal-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  z-index: 200;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal-overlay.show { display: flex; }
+.modal-box {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  padding: 28px 24px 24px;
+  width: 100%;
+  max-width: 400px;
+}
+.modal-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 20px;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+.modal-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+  transition: border-color 0.2s;
+}
+.modal-input:focus { border-color: var(--border2); }
+.modal-input::placeholder { color: var(--text-muted); }
+.modal-btns {
+  display: flex;
+  gap: 8px;
+  margin-top: 16px;
+}
+.modal-btn {
+  flex: 1;
+  padding: 11px;
+  border-radius: var(--radius-sm);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid var(--border);
+  transition: all 0.2s;
+}
+.modal-btn-cancel { background: transparent; color: var(--text-secondary); }
+.modal-btn-cancel:hover { background: var(--surface2); }
+.modal-btn-create { background: var(--accent-dim); color: var(--accent); border-color: rgba(200,184,240,0.2); }
+.modal-btn-create:hover { background: rgba(200,184,240,0.2); }
+
+/* WORD LIST SCREEN */
+.word-list-wrap {
+  width: 100%;
+  max-width: 480px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.word-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 14px 16px;
+  gap: 12px;
+}
+.word-row-left { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+.word-row-word { font-size: 15px; font-weight: 500; color: var(--text-primary); }
+.word-row-meaning { font-size: 12px; color: var(--text-muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.word-row-pos {
+  font-size: 10px;
+  color: var(--accent);
+  background: var(--accent-dim);
+  padding: 2px 7px;
+  border-radius: 20px;
+  font-weight: 500;
+  flex-shrink: 0;
+}
+
+/* QUICK ADD MODAL */
+.add-word-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 200;
+  align-items: flex-end;
+  justify-content: center;
+}
+.add-word-modal.show { display: flex; }
+.add-word-sheet {
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-radius: var(--radius) var(--radius) 0 0;
+  padding: 24px 20px 36px;
+  width: 100%;
+  max-width: 480px;
+}
+.add-word-title {
+  font-family: 'DM Serif Display', serif;
+  font-size: 18px;
+  color: var(--text-primary);
+  margin-bottom: 16px;
+}
+.add-word-fields { display: flex; flex-direction: column; gap: 10px; }
+.add-field-label { font-size: 11px; color: var(--text-muted); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+.add-field-input {
+  width: 100%;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 11px 14px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  color: var(--text-primary);
+  outline: none;
+}
+.add-field-input:focus { border-color: var(--border2); }
+.add-field-input::placeholder { color: var(--text-muted); }
+.add-field-row { display: flex; gap: 8px; }
+.add-field-row > div { flex: 1; }
+
+/* ════════════════════════════
+   STUDY SCREEN
+════════════════════════════ */
+.progress-wrap { display: flex; align-items: center; gap: 10px; }
+.progress-text { font-size: 13px; color: var(--text-secondary); font-weight: 500; min-width: 36px; text-align: right; }
+.progress-bar { width: 80px; height: 3px; background: var(--surface2); border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+
+.mode-toggle {
+  width: 100%; max-width: 480px;
+  display: flex;
+  background: var(--surface);
+  border-radius: var(--radius-sm);
+  padding: 4px;
+  margin-bottom: 10px;
+  border: 1px solid var(--border);
+}
+.mode-btn {
+  flex: 1; padding: 8px; border: none;
+  background: transparent; color: var(--text-secondary);
+  font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  cursor: pointer; border-radius: 8px; transition: all 0.2s;
+}
+.mode-btn.active { background: var(--surface2); color: var(--text-primary); }
+
+.card-scene {
+  width: 100%; max-width: 480px; height: 320px;
+  perspective: 1000px; margin-bottom: 24px; position: relative;
+}
+.card-inner {
+  width: 100%; height: 100%; position: relative;
+  transform-style: preserve-3d;
+  transition: transform 0.55s cubic-bezier(0.45, 0, 0.55, 1);
+  cursor: pointer;
+}
+.card-inner.flipped { transform: rotateY(180deg); }
+.card-face {
+  position: absolute; inset: 0;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius);
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 32px 28px; gap: 16px;
+  text-align: center; user-select: none;
+}
+.card-back { transform: rotateY(180deg); background: var(--surface2); }
+
+.card-bookmark-btn {
+  position: absolute; top: 14px; right: 14px; z-index: 10;
+  width: 36px; height: 36px; border-radius: 50%;
+  border: 1px solid var(--border); background: rgba(15,15,17,0.55);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.card-bookmark-btn:hover { border-color: rgba(255,255,255,0.2); background: rgba(36,36,41,0.85); }
+.card-bookmark-btn:active { transform: scale(0.9); }
+.card-bookmark-btn.bookmarked { background: var(--amber-dim); border-color: rgba(240,200,126,0.35); }
+.card-bookmark-btn.bookmarked svg { color: var(--amber); fill: var(--amber); }
+.card-bookmark-btn svg { width: 15px; height: 15px; color: var(--text-muted); transition: all 0.2s; fill: none; }
+
+.card-hint { font-size: 11px; color: var(--text-muted); letter-spacing: 0.08em; text-transform: uppercase; font-weight: 500; position: absolute; top: 20px; }
+.card-word { font-family: 'DM Serif Display', serif; font-size: 40px; color: var(--text-primary); line-height: 1.1; letter-spacing: -0.01em; }
+.card-pos { font-size: 12px; color: var(--accent); background: var(--accent-dim); padding: 3px 10px; border-radius: 20px; font-weight: 500; letter-spacing: 0.04em; }
+.card-example { font-size: 14px; color: var(--text-secondary); line-height: 1.65; font-style: normal; max-width: 340px; }
+.card-target { color: var(--amber); font-weight: 700; font-size: 16px; font-style: normal; }
+.card-blank { color: var(--accent); font-style: normal; font-weight: 500; border-bottom: 1px dashed var(--accent); padding-bottom: 1px; }
+.card-meaning { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--text-primary); line-height: 1.2; }
+.card-meaning-sub { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+
+.status-row { display: flex; gap: 8px; margin-bottom: 12px; min-height: 26px; }
+.badge { font-size: 11px; font-weight: 500; padding: 4px 10px; border-radius: 20px; letter-spacing: 0.04em; }
+.badge-known { background: var(--green-dim); color: var(--green); }
+.badge-unknown { background: var(--red-dim); color: var(--red); }
+.badge-bookmark { background: var(--amber-dim); color: var(--amber); }
+
+.actions { width: 100%; max-width: 480px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.btn-icon {
+  width: 52px; height: 52px; border-radius: 50%;
+  border: 1px solid var(--border); background: var(--surface);
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s; flex-shrink: 0;
+}
+.btn-icon:hover { border-color: rgba(255,255,255,0.18); background: var(--surface2); }
+.btn-icon:active { transform: scale(0.93); }
+.btn-icon:disabled { opacity: 0.28; cursor: not-allowed; }
+.btn-icon:disabled:hover { border-color: var(--border); background: var(--surface); }
+.btn-icon:disabled:active { transform: none; }
+.btn-icon svg { width: 20px; height: 20px; color: var(--text-secondary); }
+
+.btn-center-group { display: flex; gap: 12px; align-items: center; }
+.btn-action {
+  width: 68px; height: 68px; border-radius: 50%;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all 0.2s;
+}
+.btn-action:active { transform: scale(0.9); }
+.btn-known { background: var(--green-dim); border: 1px solid rgba(126,221,176,0.2); }
+.btn-known:hover { background: rgba(126,221,176,0.22); }
+.btn-unknown { background: var(--red-dim); border: 1px solid rgba(240,126,138,0.2); }
+.btn-unknown:hover { background: rgba(240,126,138,0.22); }
+
+.stats { width: 100%; max-width: 480px; display: flex; gap: 10px; margin-top: 24px; }
+.stat-card { flex: 1; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 12px 14px; text-align: center; }
+.stat-num { font-size: 22px; font-weight: 500; display: block; margin-bottom: 2px; }
+.stat-label { font-size: 10px; color: var(--text-muted); letter-spacing: 0.06em; text-transform: uppercase; }
+.stat-known .stat-num { color: var(--green); }
+.stat-unknown .stat-num { color: var(--red); }
+.stat-bookmark .stat-num { color: var(--amber); }
+
+.complete-screen {
+  display: none; flex-direction: column; align-items: center;
+  gap: 16px; width: 100%; max-width: 480px;
+  text-align: center; padding: 60px 20px;
+}
+.complete-screen.show { display: flex; }
+.complete-icon { font-size: 48px; margin-bottom: 8px; }
+.complete-title { font-family: 'DM Serif Display', serif; font-size: 28px; color: var(--text-primary); }
+.complete-sub { font-size: 14px; color: var(--text-secondary); line-height: 1.6; }
+.btn-restart {
+  margin-top: 4px; padding: 12px 28px;
+  background: var(--accent-dim); border: 1px solid rgba(200,184,240,0.25);
+  border-radius: 100px; color: var(--accent);
+  font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 500;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-restart:hover { background: rgba(200,184,240,0.2); }
+
+.main-wrap { display: flex; flex-direction: column; align-items: center; width: 100%; }
+.main-wrap.hidden { display: none; }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 32px; left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 10px 20px;
+  font-size: 13px; color: var(--text-secondary);
+  opacity: 0; transition: all 0.3s; pointer-events: none;
+  white-space: nowrap; z-index: 300;
+}
+.toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* SETTINGS SCREEN */
+.settings-list { width: 100%; max-width: 480px; display: flex; flex-direction: column; gap: 8px; }
+.settings-row {
+  display: flex; align-items: center; justify-content: space-between;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--radius-sm); padding: 14px 16px;
+}
+.settings-row-label { font-size: 14px; color: var(--text-primary); }
+.settings-row-value { font-size: 13px; color: var(--text-muted); }
+
+/* TOGGLE SWITCH */
+.toggle-switch {
+  position: relative; width: 40px; height: 22px; flex-shrink: 0;
+}
+.toggle-switch input { opacity: 0; width: 0; height: 0; }
+.toggle-slider {
+  position: absolute; inset: 0; background: var(--surface2);
+  border: 1px solid var(--border2); border-radius: 100px;
+  cursor: pointer; transition: 0.2s;
+}
+.toggle-slider::before {
+  content: ''; position: absolute;
+  width: 16px; height: 16px; left: 2px; top: 2px;
+  background: var(--text-muted); border-radius: 50%; transition: 0.2s;
+}
+.toggle-switch input:checked + .toggle-slider { background: var(--green-dim); border-color: rgba(126,221,176,0.3); }
+.toggle-switch input:checked + .toggle-slider::before { transform: translateX(18px); background: var(--green); }
+
+/* SPEAK MODE SELECTOR */
+.speak-mode-group {
+  display: flex; gap: 6px; flex-wrap: wrap; margin-top: 8px;
+}
+.speak-mode-btn {
+  padding: 6px 12px; border-radius: 100px;
+  border: 1px solid var(--border); background: transparent;
+  font-family: 'DM Sans', sans-serif; font-size: 12px;
+  color: var(--text-secondary); cursor: pointer; transition: all 0.15s;
+}
+.speak-mode-btn.active { background: var(--accent-dim); border-color: rgba(200,184,240,0.25); color: var(--accent); }
+
+/* hidden util */
+.hidden { display: none !important; }
+</style>
+</head>
+<body>
+
+<!-- ══════════════ HOME SCREEN ══════════════ -->
+<div class="screen active" id="screenHome">
+  <div class="topbar">
+    <span class="topbar-title">Flashcards</span>
+  </div>
+
+  <!-- Quote Banner -->
+  <div class="quote-banner" id="quoteBanner" onclick="toggleQuoteMeaning()">
+    <div class="quote-banner-label">Word of the moment</div>
+    <div class="quote-text" id="quoteText"></div>
+    <div class="quote-meaning" id="quoteMeaning">
+      <div class="quote-meaning-word" id="quoteMeaningWord"></div>
+      <div class="quote-meaning-text" id="quoteMeaningText"></div>
+    </div>
+    <div class="quote-actions">
+      <span class="quote-deck-label" id="quoteDeckLabel"></span>
+      <button class="quote-bookmark-btn" id="quoteBookmarkBtn" onclick="event.stopPropagation(); toggleQuoteBookmark()">
+        <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- My Decks -->
+  <div class="section-label">My Decks</div>
+  <div class="deck-list" id="deckList"></div>
+
+  <!-- Calendar -->
+  <div class="section-label">This Month</div>
+  <div class="calendar-wrap">
+    <div class="cal-header">
+      <span class="cal-month" id="calMonth"></span>
+      <div class="cal-nav">
+        <button class="cal-nav-btn" onclick="changeCalMonth(-1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+        <button class="cal-nav-btn" onclick="changeCalMonth(1)">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="cal-grid" id="calGrid"></div>
+  </div>
+
+  <!-- (Quick Actions moved to floating bar) -->
+</div>
+
+<!-- ══════════════ STUDY SCREEN ══════════════ -->
+<div class="screen" id="screenStudy">
+  <div class="topbar">
+    <button class="topbar-back" onclick="exitStudy()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <span class="topbar-title" id="studyDeckTitle">My Flashcard 1</span>
+    <div class="progress-wrap">
+      <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+      <span class="progress-text" id="progressText">1 / 10</span>
+    </div>
+  </div>
+
+  <div class="mode-toggle">
+    <button class="mode-btn active" id="modeA" onclick="setMode('A')">Word First</button>
+    <button class="mode-btn" id="modeB" onclick="setMode('B')">Meaning First</button>
+  </div>
+
+  <div class="main-wrap" id="mainWrap">
+    <div class="status-row" id="statusRow"></div>
+    <div class="card-scene" id="cardScene">
+      <button class="card-bookmark-btn" id="bookmarkBtn" onclick="toggleBookmark()" title="Save">
+        <svg viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/></svg>
+      </button>
+      <div class="card-inner" id="cardInner" onclick="flipCard()">
+        <div class="card-face card-front" id="cardFront"></div>
+        <div class="card-face card-back" id="cardBack"></div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-icon" id="backBtn" onclick="goBack()" title="Previous">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+      </button>
+      <div class="btn-center-group">
+        <button class="btn-action btn-unknown" onclick="markCard(false)" title="Not yet">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#f07e8a" stroke-width="2.2" stroke-linecap="round">
+            <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+          </svg>
+        </button>
+        <button class="btn-action btn-known" onclick="markCard(true)" title="Nailed it!">
+          <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#7eddb0" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="20 6 9 17 4 12"/>
+          </svg>
+        </button>
+      </div>
+      <button class="btn-icon" onclick="speak()" title="Listen">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+          <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"/>
+          <path d="M19.07 4.93a10 10 0 0 1 0 14.14"/>
+          <path d="M15.54 8.46a5 5 0 0 1 0 7.07"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="stats">
+      <div class="stat-card stat-known"><span class="stat-num" id="knownCount">0</span><span class="stat-label">Nailed it</span></div>
+      <div class="stat-card stat-unknown"><span class="stat-num" id="unknownCount">0</span><span class="stat-label">Not Yet</span></div>
+      <div class="stat-card stat-bookmark"><span class="stat-num" id="bookmarkCount">0</span><span class="stat-label">Saved</span></div>
+    </div>
+  </div>
+
+  <div class="complete-screen" id="completeScreen">
+    <div class="complete-icon">🎉</div>
+    <div class="complete-title">All done!</div>
+    <div class="complete-sub" id="completeMessage"></div>
+    <button class="btn-restart" onclick="restart()">Restart</button>
+    <button class="btn-restart" onclick="reviewUnknown()" id="reviewBtn" style="background:var(--red-dim);border-color:rgba(240,126,138,0.25);color:var(--red);">Review Missed</button>
+    <button class="btn-restart" onclick="exitStudy()" style="background:transparent;border-color:var(--border);color:var(--text-secondary);">Back to Home</button>
+  </div>
+</div>
+
+<!-- ══════════════ WORD LIST SCREEN ══════════════ -->
+<div class="screen" id="screenWordList">
+  <div class="topbar">
+    <button class="topbar-back" onclick="showScreen('screenHome')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <span class="topbar-title" id="wordListTitle">Words</span>
+    <button class="topbar-back" onclick="showAddWordModal()" title="Add word" style="background:var(--accent-dim);border-color:rgba(200,184,240,0.2);">
+      <svg viewBox="0 0 24 24" fill="none" stroke="var(--accent)" stroke-width="1.8" stroke-linecap="round" width="18" height="18"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
+  </div>
+  <div class="word-list-wrap" id="wordListWrap"></div>
+</div>
+
+<!-- ══════════════ SETTINGS SCREEN ══════════════ -->
+<div class="screen" id="screenSettings">
+  <div class="topbar">
+    <button class="topbar-back" onclick="showScreen('screenHome')">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <span class="topbar-title">Settings</span>
+    <div style="width:36px"></div>
+  </div>
+  <div class="settings-list">
+    <div class="settings-row" style="flex-direction:column;align-items:flex-start;gap:10px;">
+      <span class="settings-row-label">Speaker reads</span>
+      <div class="speak-mode-group">
+        <button class="speak-mode-btn active" id="smWord" onclick="setSpeakMode('word')">Word only</button>
+        <button class="speak-mode-btn" id="smExample" onclick="setSpeakMode('example')">Example only</button>
+        <button class="speak-mode-btn" id="smBoth" onclick="setSpeakMode('both')">Word → Example</button>
+      </div>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Quote refresh interval</span>
+      <span class="settings-row-value">30 min</span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Default study mode</span>
+      <span class="settings-row-value">Word First</span>
+    </div>
+    <div class="settings-row">
+      <span class="settings-row-label">Version</span>
+      <span class="settings-row-value">1.0.0</span>
+    </div>
+  </div>
+</div>
+
+<!-- New Deck Modal -->
+<div class="modal-overlay" id="newDeckModal">
+  <div class="modal-box">
+    <div class="modal-title">New Deck</div>
+    <input class="modal-input" id="newDeckInput" type="text" placeholder="Deck name..." maxlength="40">
+    <div class="modal-btns">
+      <button class="modal-btn modal-btn-cancel" onclick="closeNewDeckModal()">Cancel</button>
+      <button class="modal-btn modal-btn-create" onclick="createNewDeck()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- Quick Add Word Modal -->
+<div class="add-word-modal" id="addWordModal">
+  <div class="add-word-sheet">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+      <div class="add-word-title" style="margin-bottom:0;">Add Word</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">Auto-lookup</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="autoLookupToggle" checked>
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;">
+          <span style="font-size:11px;color:var(--text-muted);letter-spacing:0.04em;">Continuous</span>
+          <label class="toggle-switch">
+            <input type="checkbox" id="continuousToggle">
+            <span class="toggle-slider"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+    <div class="add-word-fields">
+      <div>
+        <div class="add-field-label">Word</div>
+        <input class="add-field-input" id="addWord" type="text" autocomplete="off" autocorrect="off" spellcheck="false">
+      </div>
+      <div style="position:relative;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+          <div class="add-field-label" style="margin-bottom:0;">Meaning</div>
+          <span id="lookupStatus" style="font-size:11px;color:var(--text-muted);"></span>
+        </div>
+        <input class="add-field-input" id="addMeaning" type="text" placeholder="">
+      </div>
+      <div>
+        <div class="add-field-label">Example Sentence</div>
+        <input class="add-field-input" id="addExample" type="text">
+      </div>
+    </div>
+    <div class="modal-btns" style="margin-top:16px;">
+      <button class="modal-btn modal-btn-cancel" onclick="closeAddWordModal()">Cancel</button>
+      <button class="modal-btn modal-btn-create" onclick="submitAddWord()">Add</button>
+    </div>
+  </div>
+</div>
+
+<!-- Floating Quick Bar -->
+<div class="float-bar" id="floatBar">
+  <button class="float-btn fbi-continue" onclick="continueLastDeck()" title="Continue">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+    <span class="float-btn-label">Continue</span>
+  </button>
+  <div class="float-divider"></div>
+  <button class="float-btn fbi-add" onclick="showQuickAdd()" title="Quick Add">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <span class="float-btn-label">Quick Add</span>
+  </button>
+  <div class="float-divider"></div>
+  <button class="float-btn fbi-settings" onclick="showScreen('screenSettings')" title="Settings">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+    <span class="float-btn-label">Settings</span>
+  </button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
+import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+
+// ── FIREBASE ──
+const firebaseConfig = {
+  apiKey: "AIzaSyAl7kPpEoxHE9v3ahfNzFtqwF54ANz1Ohk",
+  authDomain: "my-flashcard-90a38.firebaseapp.com",
+  projectId: "my-flashcard-90a38",
+  storageBucket: "my-flashcard-90a38.firebasestorage.app",
+  messagingSenderId: "911330115467",
+  appId: "1:911330115467:web:73214ab95f457c0180f98e"
+};
+const fbApp = initializeApp(firebaseConfig);
+const db = getFirestore(fbApp);
+const FB_REF = doc(db, "flashcards", "user-data");
+
+async function saveToFirebase() {
+  try {
+    await setDoc(FB_REF, {
+      decks: JSON.parse(JSON.stringify(decks)),
+      studiedDates: [...studiedDates],
+      homeBookmarks: [...homeBookmarks],
+      lastDeckId,
+      speakMode
+    });
+  } catch(e) { console.error("Save failed:", e); }
+}
+
+async function loadFromFirebase() {
+  try {
+    showToast('Syncing...');
+    const snap = await getDoc(FB_REF);
+    if (snap.exists()) {
+      const data = snap.data();
+      if (data.decks && data.decks.length) decks = data.decks;
+      if (data.studiedDates) studiedDates = new Set(data.studiedDates);
+      if (data.homeBookmarks) homeBookmarks = new Set(data.homeBookmarks);
+      if (data.lastDeckId) lastDeckId = data.lastDeckId;
+      if (data.speakMode) { speakMode = data.speakMode; setSpeakMode(speakMode); }
+      showToast('Synced ✓');
+    }
+  } catch(e) {
+    console.error("Load failed:", e);
+    showToast('Offline mode');
+  }
+  // 데이터 로드 완료 후 순서대로 실행
+  const now = new Date();
+  calViewYear = now.getFullYear();
+  calViewMonth = now.getMonth();
+  renderCalendar();
+  pickRandomQuote();
+  startQuoteTimer();
+  renderDeckList();
+}
+
+function autosave() { saveToFirebase(); }
+
+// ── DATA ──
+let decks = [
+  {
+    id: 1,
+    name: "My Flashcard 1",
+    cards: [
+      { word: "ambiguous",  pos: "adj", meaning: "모호한, 불분명한",       example: "The contract contained several ambiguous clauses." },
+      { word: "diligent",   pos: "adj", meaning: "부지런한, 성실한",        example: "She was a diligent student who never missed a class." },
+      { word: "eloquent",   pos: "adj", meaning: "웅변적인, 유창한",        example: "His eloquent speech moved the entire audience." },
+      { word: "inevitable", pos: "adj", meaning: "피할 수 없는, 필연적인",  example: "Change is inevitable in a growing company." },
+      { word: "meticulous", pos: "adj", meaning: "꼼꼼한, 세심한",          example: "The surgeon was meticulous in every step of the operation." },
+      { word: "pragmatic",  pos: "adj", meaning: "실용적인, 현실적인",      example: "We need a pragmatic approach to solve this problem." },
+      { word: "resilient",  pos: "adj", meaning: "회복력 있는, 탄력적인",   example: "Children are often more resilient than we think." },
+      { word: "scrutinize", pos: "v",   meaning: "면밀히 조사하다, 살피다", example: "The committee will scrutinize the financial records." },
+      { word: "tangible",   pos: "adj", meaning: "실질적인, 실체가 있는",   example: "We need tangible evidence before making any accusations." },
+      { word: "versatile",  pos: "adj", meaning: "다재다능한, 다용도의",    example: "She is a versatile actress who can play any role." }
+    ]
+  }
+];
+
+let studiedDates = new Set(); // "YYYY-MM-DD" strings
+let homeBookmarks = new Set(); // card global keys "deckId-cardIdx"
+let lastDeckId = 1;
+let calViewYear, calViewMonth;
+let quoteCardRef = null; // { deckId, cardIdx }
+let quoteRefreshTimer = null;
+
+// ── STUDY STATE ──
+let currentDeckId = null;
+let cards = [];
+let current = 0, mode = 'A', isFlipped = false;
+let known = new Set(), unknown = new Set(), bookmarks = new Set();
+let deck = [], history = [];
+
+// ── VOICE ──
+let preferredVoice = null;
+function loadVoices() {
+  const voices = speechSynthesis.getVoices();
+  const preferred = ['Google US English','Microsoft Aria Online (Natural) - English (United States)','Microsoft Jenny Online (Natural) - English (United States)','Samantha','Alex'];
+  for (const name of preferred) { const v = voices.find(v => v.name === name); if (v) { preferredVoice = v; return; } }
+  preferredVoice = voices.find(v => v.lang === 'en-US' && !v.name.toLowerCase().includes('compact')) || null;
+}
+speechSynthesis.onvoiceschanged = loadVoices;
+loadVoices();
+
+// ── SCREEN NAVIGATION ──
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ── QUOTE BANNER ──
+function highlightWord(text, word) {
+  return text.replace(new RegExp(`(${word})`, 'gi'), '<span class="card-target">$1</span>');
+}
+
+function pickRandomQuote() {
+  const all = [];
+  decks.forEach(d => d.cards.forEach((c, i) => all.push({ deckId: d.id, cardIdx: i, deck: d, card: c })));
+  if (!all.length) return;
+  const pick = all[Math.floor(Math.random() * all.length)];
+  quoteCardRef = { deckId: pick.deckId, cardIdx: pick.cardIdx };
+  document.getElementById('quoteText').innerHTML = '"' + highlightWord(pick.card.example, pick.card.word) + '"';
+  document.getElementById('quoteDeckLabel').textContent = pick.deck.name;
+  document.getElementById('quoteMeaningWord').textContent = pick.card.word + ' · ' + pick.card.meaning;
+  document.getElementById('quoteMeaningText').textContent = pick.card.pos;
+  document.getElementById('quoteMeaning').classList.remove('show');
+  const key = pick.deckId + '-' + pick.cardIdx;
+  document.getElementById('quoteBookmarkBtn').classList.toggle('bookmarked', homeBookmarks.has(key));
+}
+
+function toggleQuoteMeaning() {
+  document.getElementById('quoteMeaning').classList.toggle('show');
+}
+
+function toggleQuoteBookmark() {
+  if (!quoteCardRef) return;
+  const key = quoteCardRef.deckId + '-' + quoteCardRef.cardIdx;
+  if (homeBookmarks.has(key)) { homeBookmarks.delete(key); showToast('Removed'); }
+  else { homeBookmarks.add(key); showToast('Saved!'); }
+  document.getElementById('quoteBookmarkBtn').classList.toggle('bookmarked', homeBookmarks.has(key));
+  autosave();
+}
+
+function startQuoteTimer() {
+  if (quoteRefreshTimer) clearInterval(quoteRefreshTimer);
+  quoteRefreshTimer = setInterval(pickRandomQuote, 30 * 60 * 1000);
+}
+
+// ── DECK LIST ──
+function renderDeckList() {
+  const list = document.getElementById('deckList');
+  list.innerHTML = '';
+  decks.forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'deck-card';
+    el.id = 'deck-' + d.id;
+    el.innerHTML = `
+      <div class="deck-card-header" onclick="toggleDeck(${d.id})">
+        <div class="deck-card-left">
+          <span class="deck-card-name">${d.name}</span>
+          <span class="deck-card-meta">${d.cards.length} words</span>
+        </div>
+        <svg class="deck-card-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polyline points="9 18 15 12 9 6"/></svg>
+      </div>
+      <div class="deck-card-actions">
+        <button class="deck-action-btn" onclick="startStudy(${d.id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Start Study
+        </button>
+        <button class="deck-action-btn" onclick="viewWordList(${d.id})">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+          View Words
+        </button>
+      </div>`;
+    list.appendChild(el);
+  });
+
+  // Add deck button
+  const addBtn = document.createElement('button');
+  addBtn.className = 'deck-add-btn';
+  addBtn.onclick = () => document.getElementById('newDeckModal').classList.add('show');
+  addBtn.innerHTML = `<div class="deck-add-icon">+</div><span>New Deck</span>`;
+  list.appendChild(addBtn);
+
+  updateQuickLabels();
+}
+
+function toggleDeck(id) {
+  const el = document.getElementById('deck-' + id);
+  const isOpen = el.classList.contains('open');
+  document.querySelectorAll('.deck-card').forEach(d => d.classList.remove('open'));
+  if (!isOpen) el.classList.add('open');
+}
+
+// ── NEW DECK MODAL ──
+function closeNewDeckModal() {
+  document.getElementById('newDeckModal').classList.remove('show');
+  document.getElementById('newDeckInput').value = '';
+}
+function createNewDeck() {
+  const name = document.getElementById('newDeckInput').value.trim();
+  if (!name) return;
+  const newId = Date.now();
+  decks.push({ id: newId, name, cards: [] });
+  closeNewDeckModal();
+  renderDeckList();
+  showToast('Deck created!');
+  autosave();
+}
+
+// ── WORD LIST ──
+function viewWordList(deckId) {
+  const d = decks.find(d => d.id === deckId);
+  if (!d) return;
+  currentDeckId = deckId;
+  document.getElementById('wordListTitle').textContent = d.name;
+  const wrap = document.getElementById('wordListWrap');
+  wrap.innerHTML = '';
+  if (!d.cards.length) {
+    wrap.innerHTML = '<p style="color:var(--text-muted);font-size:14px;text-align:center;padding:32px 0;">No words yet. Tap + to add.</p>';
+  } else {
+    d.cards.forEach((c, i) => {
+      const row = document.createElement('div');
+      row.className = 'word-row';
+      row.innerHTML = `
+        <div class="word-row-left">
+          <span class="word-row-word">${c.word}</span>
+          <span class="word-row-meaning">${c.meaning}</span>
+        </div>
+        <span class="word-row-pos">${c.pos}</span>`;
+      wrap.appendChild(row);
+    });
+  }
+  showScreen('screenWordList');
+}
+
+// ── ADD WORD ──
+let addWordTargetDeckId = null;
+function showAddWordModal(deckId) {
+  addWordTargetDeckId = deckId || currentDeckId || lastDeckId;
+  document.getElementById('addWord').value = '';
+  document.getElementById('addMeaning').value = '';
+  document.getElementById('addExample').value = '';
+  document.getElementById('lookupStatus').textContent = '';
+  document.getElementById('addWordModal').classList.add('show');
+  setTimeout(() => document.getElementById('addWord').focus(), 100);
+  document.getElementById('addWord').oninput = onAddWordInput;
+}
+function closeAddWordModal() {
+  document.getElementById('addWordModal').classList.remove('show');
+  clearTimeout(lookupTimer);
+}
+// ── AUTO LOOKUP ──
+let lookupTimer = null;
+
+async function lookupWord(word) {
+  const status = document.getElementById('lookupStatus');
+  status.textContent = 'Looking up...';
+  status.style.color = 'var(--text-muted)';
+  try {
+    // Step 1: Free Dictionary API
+    const dictRes = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${encodeURIComponent(word)}`);
+    if (!dictRes.ok) throw new Error('not found');
+    const dictData = await dictRes.json();
+    const entry = dictData[0];
+    // Get first definition
+    let engDef = '';
+    for (const meaning of entry.meanings) {
+      if (meaning.definitions && meaning.definitions[0]) {
+        engDef = meaning.definitions[0].definition;
+        break;
+      }
+    }
+    if (!engDef) throw new Error('no definition');
+
+    // Step 2: MyMemory translate EN → KO
+    const transRes = await fetch(`https://api.mymemory.translated.net/get?q=${encodeURIComponent(engDef)}&langpair=en|ko`);
+    const transData = await transRes.json();
+    const korean = transData.responseData && transData.responseData.translatedText;
+    if (!korean) throw new Error('no translation');
+
+    document.getElementById('addMeaning').value = korean;
+    status.textContent = '✓ Auto-filled';
+    status.style.color = 'var(--green)';
+    setTimeout(() => { status.textContent = ''; }, 2500);
+  } catch (e) {
+    status.textContent = 'Not found';
+    status.style.color = 'var(--text-muted)';
+    setTimeout(() => { status.textContent = ''; }, 2000);
+  }
+}
+
+function onAddWordInput() {
+  const autoOn = document.getElementById('autoLookupToggle').checked;
+  if (!autoOn) return;
+  const word = document.getElementById('addWord').value.trim();
+  clearTimeout(lookupTimer);
+  document.getElementById('lookupStatus').textContent = '';
+  if (word.length < 2) return;
+  lookupTimer = setTimeout(() => lookupWord(word), 900);
+}
+
+
+function detectPos(word) {
+  const w = word.toLowerCase().trim();
+  if (/ing$/.test(w)) return 'v';
+  if (/tion$|sion$|ment$|ness$|ity$|ance$|ence$|hood$|ship$|dom$|ism$|ist$/.test(w)) return 'n';
+  if (/ly$/.test(w)) return 'adv';
+  if (/ful$|less$|ous$|ious$|eous$|al$|ial$|ic$|ical$|ive$|ative$|ible$|able$|ent$|ant$|ary$/.test(w)) return 'adj';
+  if (/ize$|ise$|ify$|en$|ate$/.test(w)) return 'v';
+  if (/ed$/.test(w)) return 'v';
+  return 'n';
+}
+
+function submitAddWord() {
+  const word = document.getElementById('addWord').value.trim();
+  const meaning = document.getElementById('addMeaning').value.trim();
+  const example = document.getElementById('addExample').value.trim();
+  if (!word || !meaning) { showToast('Word and meaning required'); return; }
+  const pos = detectPos(word);
+  const d = decks.find(d => d.id === addWordTargetDeckId);
+  if (!d) return;
+  d.cards.push({ word, pos, meaning, example: example || word + '.' });
+  renderDeckList();
+  pickRandomQuote();
+  showToast('Added! (' + pos + ')');
+  autosave();
+  const continuous = document.getElementById('continuousToggle').checked;
+  if (continuous) {
+    document.getElementById('addWord').value = '';
+    document.getElementById('addMeaning').value = '';
+    document.getElementById('addExample').value = '';
+    document.getElementById('addWord').focus();
+  } else {
+    closeAddWordModal();
+    if (document.getElementById('screenWordList').classList.contains('active')) {
+      viewWordList(addWordTargetDeckId);
+    }
+  }
+}
+
+// ── QUICK ACTIONS ──
+function updateQuickLabels() {}
+
+function continueLastDeck() {
+  const d = decks.find(d => d.id === lastDeckId);
+  if (d) startStudy(lastDeckId);
+  else showToast('No recent session');
+}
+
+function showQuickAdd() {
+  showAddWordModal(lastDeckId);
+}
+
+// ── CALENDAR ──
+function initCalendar() {
+  const now = new Date();
+  calViewYear = now.getFullYear();
+  calViewMonth = now.getMonth();
+  renderCalendar();
+}
+
+function changeCalMonth(delta) {
+  calViewMonth += delta;
+  if (calViewMonth > 11) { calViewMonth = 0; calViewYear++; }
+  if (calViewMonth < 0)  { calViewMonth = 11; calViewYear--; }
+  renderCalendar();
+}
+
+function renderCalendar() {
+  const now = new Date();
+  const months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  document.getElementById('calMonth').textContent = months[calViewMonth] + ' ' + calViewYear;
+  const grid = document.getElementById('calGrid');
+  grid.innerHTML = '';
+  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => {
+    const el = document.createElement('div');
+    el.className = 'cal-dow';
+    el.textContent = d;
+    grid.appendChild(el);
+  });
+  const firstDay = new Date(calViewYear, calViewMonth, 1).getDay();
+  const daysInMonth = new Date(calViewYear, calViewMonth + 1, 0).getDate();
+  for (let i = 0; i < firstDay; i++) {
+    const el = document.createElement('div'); el.className = 'cal-day empty'; grid.appendChild(el);
+  }
+  for (let d = 1; d <= daysInMonth; d++) {
+    const el = document.createElement('div');
+    el.className = 'cal-day';
+    el.textContent = d;
+    const dateStr = calViewYear + '-' + String(calViewMonth+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+    if (d === now.getDate() && calViewMonth === now.getMonth() && calViewYear === now.getFullYear()) el.classList.add('today');
+    if (studiedDates.has(dateStr)) el.classList.add('studied');
+    grid.appendChild(el);
+  }
+}
+
+function markTodayStudied() {
+  const now = new Date();
+  const dateStr = now.getFullYear() + '-' + String(now.getMonth()+1).padStart(2,'0') + '-' + String(now.getDate()).padStart(2,'0');
+  if (!studiedDates.has(dateStr)) {
+    studiedDates.add(dateStr);
+    autosave();
+  }
+  renderCalendar();
+}
+
+// ── STUDY ──
+function startStudy(deckId) {
+  const d = decks.find(d => d.id === deckId);
+  if (!d || !d.cards.length) { showToast('No words in this deck'); return; }
+  currentDeckId = deckId;
+  lastDeckId = deckId;
+  cards = d.cards;
+  current = 0; mode = 'A'; isFlipped = false;
+  known = new Set(); unknown = new Set(); bookmarks = new Set();
+  deck = [...cards.keys()]; history = [];
+  document.getElementById('studyDeckTitle').textContent = d.name;
+  document.getElementById('modeA').classList.add('active');
+  document.getElementById('modeB').classList.remove('active');
+  document.getElementById('mainWrap').classList.remove('hidden');
+  document.getElementById('completeScreen').classList.remove('show');
+  document.getElementById('cardInner').classList.remove('flipped');
+  showScreen('screenStudy');
+  renderCard();
+}
+
+function exitStudy() {
+  updateQuickLabels();
+  renderDeckList();
+  renderCalendar();
+  showScreen('screenHome');
+}
+
+function setMode(m) {
+  mode = m;
+  document.getElementById('modeA').classList.toggle('active', m === 'A');
+  document.getElementById('modeB').classList.toggle('active', m === 'B');
+  isFlipped = false;
+  document.getElementById('cardInner').classList.remove('flipped');
+  renderCard();
+}
+
+function renderCard() {
+  if (current >= deck.length) { showComplete(); return; }
+  const idx = deck[current];
+  const c = cards[idx];
+  const front = document.getElementById('cardFront');
+  const back = document.getElementById('cardBack');
+  const highlighted = highlightWord(c.example, c.word);
+  if (mode === 'A') {
+    front.innerHTML = `<span class="card-hint">Tap to reveal</span><div class="card-word">${c.word}</div><div class="card-pos">${c.pos}</div><div class="card-example">"${highlighted}"</div>`;
+    back.innerHTML = `<span class="card-hint">Meaning</span><div class="card-meaning">${c.meaning}</div><div class="card-meaning-sub">${c.word} · ${c.pos}</div><div class="card-example" style="margin-top:4px;">"${highlighted}"</div>`;
+  } else {
+    const blanked = c.example.replace(new RegExp(c.word, 'gi'), `<span class="card-blank">${'_'.repeat(c.word.length)}</span>`);
+    front.innerHTML = `<span class="card-hint">Tap to reveal</span><div class="card-meaning">${c.meaning}</div><div class="card-example" style="margin-top:8px;">"${blanked}"</div>`;
+    back.innerHTML = `<span class="card-hint">Answer</span><div class="card-word">${c.word}</div><div class="card-pos">${c.pos}</div><div class="card-example">"${highlighted}"</div>`;
+  }
+  updateProgress();
+  updateStatusRow(idx);
+  updateStats();
+  updateBackBtn();
+  document.getElementById('bookmarkBtn').classList.toggle('bookmarked', bookmarks.has(idx));
+}
+
+function flipCard() {
+  isFlipped = !isFlipped;
+  document.getElementById('cardInner').classList.toggle('flipped', isFlipped);
+}
+
+function markCard(isKnown) {
+  if (current >= deck.length) return;
+  const idx = deck[current];
+  history.push({ idx, wasKnown: known.has(idx), wasUnknown: unknown.has(idx) });
+  if (isKnown) { known.add(idx); unknown.delete(idx); showToast('Nailed it! ✦'); }
+  else { unknown.add(idx); known.delete(idx); showToast('Not yet...'); }
+  current++;
+  isFlipped = false;
+  markTodayStudied();
+  autosave();
+  setTimeout(() => { document.getElementById('cardInner').classList.remove('flipped'); renderCard(); }, 150);
+}
+
+function goBack() {
+  if (current === 0) return;
+  current--;
+  const prev = history.pop();
+  if (prev) {
+    const { idx, wasKnown, wasUnknown } = prev;
+    known.delete(idx); unknown.delete(idx);
+    if (wasKnown) known.add(idx);
+    if (wasUnknown) unknown.add(idx);
+  }
+  isFlipped = false;
+  document.getElementById('cardInner').classList.remove('flipped');
+  renderCard();
+}
+
+function updateBackBtn() { document.getElementById('backBtn').disabled = (current === 0); }
+
+function toggleBookmark() {
+  if (current >= deck.length) return;
+  const idx = deck[current];
+  if (bookmarks.has(idx)) { bookmarks.delete(idx); showToast('Removed'); }
+  else { bookmarks.add(idx); showToast('Saved!'); }
+  document.getElementById('bookmarkBtn').classList.toggle('bookmarked', bookmarks.has(idx));
+  updateStats(); updateStatusRow(idx);
+  autosave();
+}
+
+// ── SPEAK MODE ──
+let speakMode = 'word'; // 'word' | 'example' | 'both'
+function setSpeakMode(m) {
+  speakMode = m;
+  ['smWord','smExample','smBoth'].forEach(id => document.getElementById(id).classList.remove('active'));
+  const map = { word: 'smWord', example: 'smExample', both: 'smBoth' };
+  document.getElementById(map[m]).classList.add('active');
+}
+
+function speak() {
+  if (current >= deck.length) return;
+  const c = cards[deck[current]];
+  speechSynthesis.cancel();
+  if (speakMode === 'word' || speakMode === 'both') {
+    const utt = new SpeechSynthesisUtterance(c.word);
+    utt.lang = 'en-US'; utt.rate = 0.85; utt.pitch = 1;
+    if (preferredVoice) utt.voice = preferredVoice;
+    if (speakMode === 'both') {
+      utt.onend = () => {
+        setTimeout(() => {
+          const utt2 = new SpeechSynthesisUtterance(c.example);
+          utt2.lang = 'en-US'; utt2.rate = 0.88; utt2.pitch = 1;
+          if (preferredVoice) utt2.voice = preferredVoice;
+          speechSynthesis.speak(utt2);
+        }, 400);
+      };
+    }
+    speechSynthesis.speak(utt);
+  } else {
+    const utt = new SpeechSynthesisUtterance(c.example);
+    utt.lang = 'en-US'; utt.rate = 0.88; utt.pitch = 1;
+    if (preferredVoice) utt.voice = preferredVoice;
+    speechSynthesis.speak(utt);
+  }
+}
+
+function updateProgress() {
+  const total = deck.length;
+  const pct = total > 0 ? (current / total * 100) : 100;
+  document.getElementById('progressFill').style.width = pct + '%';
+  document.getElementById('progressText').textContent = `${Math.min(current+1, total)} / ${total}`;
+}
+
+function updateStatusRow(idx) {
+  const row = document.getElementById('statusRow');
+  let html = '';
+  if (known.has(idx)) html += '<span class="badge badge-known">Nailed it</span>';
+  if (unknown.has(idx)) html += '<span class="badge badge-unknown">Not yet</span>';
+  if (bookmarks.has(idx)) html += '<span class="badge badge-bookmark">Saved</span>';
+  row.innerHTML = html;
+}
+
+function updateStats() {
+  document.getElementById('knownCount').textContent = known.size;
+  document.getElementById('unknownCount').textContent = unknown.size;
+  document.getElementById('bookmarkCount').textContent = bookmarks.size;
+}
+
+function showComplete() {
+  document.getElementById('mainWrap').classList.add('hidden');
+  const cs = document.getElementById('completeScreen');
+  cs.classList.add('show');
+  document.getElementById('completeMessage').textContent = `${deck.length} cards done · ${known.size} nailed · ${unknown.size} to review`;
+  document.getElementById('reviewBtn').style.display = unknown.size > 0 ? 'block' : 'none';
+}
+
+function restart() {
+  deck = [...cards.keys()];
+  current = 0; known.clear(); unknown.clear(); history = [];
+  isFlipped = false;
+  document.getElementById('completeScreen').classList.remove('show');
+  document.getElementById('mainWrap').classList.remove('hidden');
+  document.getElementById('cardInner').classList.remove('flipped');
+  renderCard();
+}
+
+function reviewUnknown() {
+  deck = [...unknown];
+  current = 0; known.clear(); unknown.clear(); history = [];
+  isFlipped = false;
+  document.getElementById('completeScreen').classList.remove('show');
+  document.getElementById('mainWrap').classList.remove('hidden');
+  document.getElementById('cardInner').classList.remove('flipped');
+  renderCard();
+}
+
+// ── TOAST ──
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 1600);
+}
+
+// ── EXPOSE TO HTML onclick handlers ──
+window.showScreen = showScreen;
+window.toggleQuoteMeaning = toggleQuoteMeaning;
+window.toggleQuoteBookmark = toggleQuoteBookmark;
+window.toggleDeck = toggleDeck;
+window.startStudy = startStudy;
+window.viewWordList = viewWordList;
+window.closeNewDeckModal = closeNewDeckModal;
+window.createNewDeck = createNewDeck;
+window.showAddWordModal = showAddWordModal;
+window.closeAddWordModal = closeAddWordModal;
+window.submitAddWord = submitAddWord;
+window.continueLastDeck = continueLastDeck;
+window.showQuickAdd = showQuickAdd;
+window.changeCalMonth = changeCalMonth;
+window.exitStudy = exitStudy;
+window.setMode = setMode;
+window.flipCard = flipCard;
+window.markCard = markCard;
+window.goBack = goBack;
+window.toggleBookmark = toggleBookmark;
+window.speak = speak;
+window.restart = restart;
+window.reviewUnknown = reviewUnknown;
+window.setSpeakMode = setSpeakMode;
+window.onAddWordInput = onAddWordInput;
+
+// ── INIT ──
+loadFromFirebase();
+</script>
+</body>
+</html>
