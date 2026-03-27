@@ -998,7 +998,11 @@ async function loadFromFirebase() {
     console.error("Load failed:", e);
     showToast('Offline mode');
   }
-  initCalendar();
+  // 데이터 로드 완료 후 순서대로 실행
+  const now = new Date();
+  calViewYear = now.getFullYear();
+  calViewMonth = now.getMonth();
+  renderCalendar();
   pickRandomQuote();
   startQuoteTimer();
   renderDeckList();
