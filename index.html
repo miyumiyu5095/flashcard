@@ -1786,7 +1786,7 @@ function renderCalendar() {
   document.getElementById('calMonth').textContent = months[calViewMonth] + ' ' + calViewYear;
   const grid = document.getElementById('calGrid');
   grid.innerHTML = '';
-  ['Su','Mo','Tu','We','Th','Fr','Sa'].forEach(d => {
+  ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].forEach(d => {
     const el = document.createElement('div');
     el.className = 'cal-dow';
     el.textContent = d;
